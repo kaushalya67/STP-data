@@ -1,77 +1,84 @@
-const shops=['Main Shop'];
-const sales=[];
 
-document.getElementById('date').value=new Date().toISOString().split('T')[0];
+const products=["Yogurt","Watalappan","Jelly Yogurt","Caramel Pudding"];
+let shops=JSON.parse(localStorage.getItem("shops")||'["Main Shop"]');
+let prices=JSON.parse(localStorage.getItem("prices")||'{"Yogurt":100,"Watalappan":150,"Jelly Yogurt":120,"Caramel Pudding":180}');
+let sales=JSON.parse(localStorage.getItem("sales")||"[]");
+
+date.value=new Date().toISOString().split('T')[0];
 
 function login(){
- if(username.value==='admin' && password.value==='1234'){
-  loginPage.style.display='none';
-  appPage.style.display='block';
-  loadShops();
- }
- else alert('Invalid Login');
+ if(u.value==="admin" && p.value==="admin123"){
+   login.style.display="none";
+   app.style.display="block";
+   init();
+ } else alert("Invalid Login");
 }
-
 function logout(){location.reload();}
 
-function loadShops(){
- const s=document.getElementById('shop');
- s.innerHTML='';
- shops.forEach(x=>{
-  let o=document.createElement('option');
-  o.text=x;
-  s.add(o);
- });
+function init(){
+ item.innerHTML=products.map(x=>`<option>${x}</option>`).join("");
+ renderShops();
+ renderPrices();
+ renderTable();
+}
+
+function renderShops(){
+ shop.innerHTML=shops.map(x=>`<option>${x}</option>`).join("");
+ localStorage.setItem("shops",JSON.stringify(shops));
 }
 
 function addShop(){
  if(newShop.value){
   shops.push(newShop.value);
-  newShop.value='';
-  loadShops();
+  newShop.value="";
+  renderShops();
  }
 }
 
-function getPrice(item){
- return Number(document.getElementById('p'+item).value||0);
-}
-
-function addSale(){
- const item=document.getElementById('item').value;
- const qty=Number(document.getElementById('qty').value);
- const price=getPrice(item);
- const total=qty*price;
-
- sales.push({
-  date:date.value,item,shop:shop.value,qty,price,total
+function renderPrices(){
+ prices.innerHTML="";
+ const box=document.getElementById("prices");
+ box.innerHTML="";
+ products.forEach(pn=>{
+   box.innerHTML += `<label>${pn}</label><input value="${prices[pn]}" onchange="updatePrice('${pn}',this.value)">`;
  });
-
- render();
 }
 
-function render(){
- salesBody.innerHTML='';
+function updatePrice(name,val){
+ prices[name]=Number(val);
+ localStorage.setItem("prices",JSON.stringify(prices));
+ renderTable();
+}
+
+function saveSale(){
+ const rec={
+ date:date.value,
+ item:item.value,
+ shop:shop.value,
+ qty:Number(qty.value),
+ price:prices[item.value]
+ };
+ rec.total=rec.qty*rec.price;
+ sales.push(rec);
+ localStorage.setItem("sales",JSON.stringify(sales));
+ renderTable();
+}
+
+function renderTable(){
+ tbody.innerHTML="";
+ let grand=0;
  sales.forEach(r=>{
-  salesBody.innerHTML+=`<tr>
-  <td>${r.date}</td>
-  <td>${r.item}</td>
-  <td>${r.shop}</td>
-  <td>${r.qty}</td>
-  <td>${r.price}</td>
-  <td>${r.total}</td>
-  </tr>`;
+ grand+=r.total;
+ tbody.innerHTML += `<tr><td>${r.date}</td><td>${r.item}</td><td>${r.shop}</td><td>${r.qty}</td><td>${r.price}</td><td>${r.total}</td></tr>`;
  });
+ summary.innerText=`Records: ${sales.length} | Total Sales: Rs. ${grand}`;
 }
 
 function downloadCSV(){
- let csv='Date,Item,Shop,Quantity,Unit Price,Total\n';
- sales.forEach(r=>{
-  csv+=`${r.date},${r.item},${r.shop},${r.qty},${r.price},${r.total}\n`;
- });
-
- const blob=new Blob([csv],{type:'text/csv'});
- const a=document.createElement('a');
- a.href=URL.createObjectURL(blob);
- a.download='sales.csv';
+ let csv="Date,Item,Shop,Qty,Price,Total\n";
+ sales.forEach(r=>csv+=`${r.date},${r.item},${r.shop},${r.qty},${r.price},${r.total}\n`);
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([csv]));
+ a.download="sales.csv";
  a.click();
 }
